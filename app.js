@@ -29,7 +29,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // Use cors middleware
 app.use(cors());
-
+app.use(express.json());
 // Serve the index.html file
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/excel.html');
@@ -91,7 +91,56 @@ app.get('/authenticate', async (req, res) => {
     res.status(500).send('Error authenticating user.');
   }
 });
+// PUT API to update user data based on ID
 
+app.put('/update/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, email, course } = req.body;
+
+  try {
+    const updatedData = await Data.findByIdAndUpdate(id, { name, email, course }, { new: true });
+    if (updatedData) {
+      res.json(updatedData);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    res.status(500).send('Error updating user data.');
+  }
+});
+
+
+
+// DELETE API to delete a user by ID
+app.delete('/delete/:id', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const deletedUser = await Data.findByIdAndDelete(userId);
+    if (deletedUser) {
+      res.json(deletedUser);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).send('Error deleting user.');
+  }
+});
+
+// ... (remaining code)
+
+app.delete('/delete', async (req, res) => {
+  const userIds = req.body.userIds;
+
+  try {
+    const deletedUsers = await Data.deleteMany({ _id: { $in: userIds } });
+    res.json(deletedUsers);
+  } catch (error) {
+    console.error('Error deleting users:', error);
+    res.status(500).send('Error deleting users.');
+  }
+});
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
